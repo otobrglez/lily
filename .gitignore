@@ -1,0 +1,22 @@
+requests/http-client.private.env.json
+
+DEPLOY.md
+.bsp/
+.envrc
+project/target
+project/project
+target
+.idea/
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Should not be in git.
+k8s/000-secrets.yml
