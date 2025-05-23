@@ -33,11 +33,14 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     name             := "core",
     scalaVersion     := scalaVersion.value,
     buildInfoKeys    := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "dev.lily.info",
+    buildInfoPackage := "dev.lily.info"
+    /*
     libraryDependencies ++= List(
-      "dev.zio"                %%% "izumi-reflect"           % Versions.izumiReflect,
-      "org.scala-lang.modules" %%% "scala-collection-compat" % Versions.scalaCollectionCompat
+        "dev.zio"                %%% "izumi-reflect"           % Versions.izumiReflect,
+       "org.scala-lang.modules" %%% "scala-collection-compat" % Versions.scalaCollectionCompat
     )
+
+     */
   )
   .jsSettings()
   .jvmSettings(
@@ -57,12 +60,7 @@ lazy val frontend = (project in file("frontend"))
       org.scalajs.linker.interface.ModuleInitializer
         .mainMethod("dev.lilly.fe.Main", "main")
     ), */
-    libraryDependencies ++= {
-      zio ++ Seq(
-        "io.github.cquiroz" %%% "scala-java-time" % "2.6.0",
-        "org.scala-js"      %%% "scalajs-dom"     % "2.8.0"
-      )
-    }
+    libraryDependencies ++= { zio ++ JS.coreJS.value }
     // Compile / fullLinkJS / artifactPath := baseDirectory.value / "target" / "lily.js"
   )
 

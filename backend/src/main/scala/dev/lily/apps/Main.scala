@@ -1,45 +1,45 @@
 package dev.lily.apps
 
-import dev.lilly.HTMLZ
-import zio.ZIOAppDefault
-import zio.ZIO.logInfo
+import dev.lily.Live
+import dev.lily.lhtml.syntax.{*, given}
+import dev.lily.HTMLOps.given
 import zio.*
+import zio.Runtime.{removeDefaultLoggers, setConfigProvider}
 import zio.http.*
-import zio.http.codec.PathCodec.trailing
-import zio.http.template.*
+import zio.http.codec.PathCodec.*
+import zio.logging.backend.SLF4J
 
 object Main extends ZIOAppDefault:
 
-  /*
-  private def program =
-    logInfo("Hello, world from backend") *>
-      logInfo(HTMLZ.sayHello("Oto Brglez"))
+  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
+    setConfigProvider(ConfigProvider.envProvider) >>> removeDefaultLoggers >>> SLF4J.slf4j
 
-  def run = program
-   */
-
-  // Define the routes for your API
-  val apiRoutes = Routes(
+  private val routes = Routes(
     Method.GET / Root            -> handler(
       Response.html(
-        Html.raw(
-          "<html><head><title>lily</title>" +
-            "<script src=\"/static/main.js\"></script>" +
-            "</head>" +
-            "<body><h1>Hello, World!</h1></body>" +
-            "</html>"
+        html(
+          head(
+            title("Lily"),
+            meta().withAttr("charset" -> "utf-8"),
+            meta().withAttr("name"    -> "viewport", "content" -> "width=device-width, initial-scale=1")
+          ),
+          body(
+            h1("Hello from Lily! 👋"),
+            div(
+              ul(
+                li(
+                  a("Live Clock Demo").withAttr("href", "/live-clock")
+                )
+              )
+            ).withClass("main")
+          )
         )
       )
     ),
     Method.GET / "api" / "hello" -> handler(Response.text("Hello, World!"))
-  )
+  ) ++ Live.route(_ / "live-clock")
 
-  // Define static assets middleware
-  // This will serve files from the "assets" directory in resources at the URL path /static
-  val staticMiddleware = Middleware.serveResources(Path.empty / "static", "assets")
+  private val staticMiddleware = Middleware.serveResources(Path.empty / "static", "assets")
+  private val app              = routes @@ staticMiddleware @@ Middleware.debug
 
-  // Combine API routes with static middleware
-  val app = apiRoutes @@ staticMiddleware
-
-  // Run the server
-  override def run = Server.serve(app).provide(Server.defaultWithPort(3334))
+  def run = Server.serve(app).provide(Server.defaultWithPort(3334))

@@ -21,7 +21,7 @@
         <minimumBreadcrumbLevel>DEBUG</minimumBreadcrumbLevel>
     </appender>
 
-    <logger name="com.pinkstack.hnjobs" level="DEBUG"/>
+    <logger name="dev.lily" level="DEBUG"/>
     <logger name="dev.lily.sandbox.CachedLayer" level="INFO"/>
 
     <logger name="io.netty" level="INFO"/>
@@ -29,6 +29,6 @@
 
     <root level="${APP_LOG_LEVEL:-INFO}">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="Sentry"/>
+        <!-- <appender-ref ref="Sentry"/> -->
     </root>
 </configuration>

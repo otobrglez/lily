@@ -1,4 +1,6 @@
 import sbt.*
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.*
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 
 object Dependencies {
   type Version = String
@@ -13,13 +15,22 @@ object Dependencies {
     val sentryLogback: Version         = sentry
     val zio: Version                   = "2.1.18"
     val zioConfig: Version             = "4.0.4"
-    val zioHttp: Version               = "3.2.0"
+    val zioHttp: Version               = "3.3.0"
     val zioLogging: Version            = "2.5.0"
     val zioMetrics: Version            = "2.3.1"
     val zioQuery: Version              = "0.7.7"
-    val zioSchema: Version             = "1.7.0"
+    val zioSchema: Version             = "1.7.2"
     val izumiReflect: Version          = "3.0.1"
     val scalaCollectionCompat: Version = "2.13.0"
+  }
+
+  object JS {
+    lazy val coreJS = Def.setting(
+      Seq(
+        "io.github.cquiroz" %%% "scala-java-time" % "2.6.0",
+        "org.scala-js"      %%% "scalajs-dom"     % "2.8.0"
+      )
+    )
   }
 
   lazy val zio: Modules = Seq(
@@ -89,6 +100,7 @@ object Dependencies {
     "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases",
     "Sonatype snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     "Sonatype staging" at "https://oss.sonatype.org/content/repositories/staging",
-    "Java.net Maven2 Repository" at "https://download.java.net/maven/2/"
+    "Java.net Maven2 Repository" at "https://download.java.net/maven/2/",
+    "JitPack".at("https://jitpack.io")
   )
 }
