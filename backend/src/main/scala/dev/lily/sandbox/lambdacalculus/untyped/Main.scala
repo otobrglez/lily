@@ -66,7 +66,7 @@ val strLen: String => Int = Y: self =>
   case "" => 0
   case s  => 1 + self(s.tail)
 
-@main def main(): Unit =
+/* @main */ def main(): Unit =
   println("--- " * 2 + "String Length with Y Combinator" + " ---" * 2)
   println("--- " * 2 + "Lambda Calculus 1" + " ---" * 2)
   println("### Booleans")
