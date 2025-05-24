@@ -31,6 +31,14 @@ object Dependencies {
         "org.scala-js"      %%% "scalajs-dom"     % "2.8.0"
       )
     )
+
+    lazy val json = Def.setting(
+      Seq(
+        "io.circe" %%% "circe-core",
+        "io.circe" %%% "circe-generic",
+        "io.circe" %%% "circe-parser"
+      ).map(_ % Versions.circe)
+    )
   }
 
   lazy val zio: Modules = Seq(

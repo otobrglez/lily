@@ -31,13 +31,11 @@ object HtmlSpec extends ZIOSpecDefault:
       val html       = Html.renderWithIndent(basic)
       val htmlAsJson = Html.renderToJson(basic)
 
-      println(html)
-
       assertTrue(
         html.contains("Hello world") && html.startsWith("<html>") &&
           htmlAsJson.contains("Hello world") && htmlAsJson.contains("body")
       )
-    }.when(false),
+    },
     test("IDs") {
       val myHtml = html(
         head(title("Hello world")),
@@ -56,7 +54,7 @@ object HtmlSpec extends ZIOSpecDefault:
       // println("---")
       // println(HtmlIdEnhancer.addIds(myHtml))
 
-      println(
+      val renderedHtml = (
         Html.renderWithIndent(
           Html.attachLIIDs(myHtml, 2332)
         )
@@ -64,6 +62,6 @@ object HtmlSpec extends ZIOSpecDefault:
 
       // println(Html.renderWithIndent(HtmlIdEnhancer.addIds(myHtml)))
 
-      assertCompletes
+      assertTrue(renderedHtml.contains("data-idli"))
     }
   )

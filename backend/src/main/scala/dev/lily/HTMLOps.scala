@@ -11,5 +11,8 @@ object HTMLOps:
 
     def on(clientEvent: String, serverEvent: String): Html =
       h.withData("li-on-" + clientEvent, serverEvent)
+      
+    def on(tpl: (String, String)): Html = on(tpl._1, tpl._2)
+    
 
   given Conversion[Html, ZIOHtml] = asZIOHtml

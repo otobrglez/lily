@@ -1,8 +1,8 @@
 package dev.lily.apps
 
-import dev.lily.Live
-import dev.lily.lhtml.syntax.{*, given}
 import dev.lily.HTMLOps.given
+import dev.lily.lhtml.syntax.{*, given}
+import dev.lily.{examples, LiveView}
 import zio.*
 import zio.Runtime.{removeDefaultLoggers, setConfigProvider}
 import zio.http.*
@@ -27,9 +27,8 @@ object Main extends ZIOAppDefault:
             h1("Hello from Lily! 👋"),
             div(
               ul(
-                li(
-                  a("Live Clock Demo").withAttr("href", "/live-clock")
-                )
+                li(a("Live Clock Demo").withAttr("href", "/live-clock")),
+                li(a("Counter demo v2").withAttr("href", "/counter-v2"))
               )
             ).withClass("main")
           )
@@ -37,7 +36,8 @@ object Main extends ZIOAppDefault:
       )
     ),
     Method.GET / "api" / "hello" -> handler(Response.text("Hello, World!"))
-  ) ++ Live.route(_ / "live-clock")
+  )
+    ++ LiveView.route(Path.empty / "counter-v2", examples.CounterView)
 
   private val staticMiddleware = Middleware.serveResources(Path.empty / "static", "assets")
   private val app              = routes @@ staticMiddleware @@ Middleware.debug

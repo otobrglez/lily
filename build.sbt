@@ -42,9 +42,11 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
 
      */
   )
-  .jsSettings()
+  .jsSettings(
+    libraryDependencies ++= { JS.coreJS.value ++ json }
+  )
   .jvmSettings(
-    libraryDependencies ++= { zio },
+    libraryDependencies ++= { zio ++ json },
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
 
@@ -60,7 +62,7 @@ lazy val frontend = (project in file("frontend"))
       org.scalajs.linker.interface.ModuleInitializer
         .mainMethod("dev.lilly.fe.Main", "main")
     ), */
-    libraryDependencies ++= { zio ++ JS.coreJS.value }
+    libraryDependencies ++= { zio ++ JS.coreJS.value ++ JS.json.value }
     // Compile / fullLinkJS / artifactPath := baseDirectory.value / "target" / "lily.js"
   )
 
@@ -70,29 +72,15 @@ lazy val backend = (project in file("backend"))
   .settings(
     name                 := "backend",
     scalaVersion         := scalaVersion.value,
-    libraryDependencies ++= { zio },
+    libraryDependencies ++= { zio ++ jwt ++ logging },
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     assembly / mainClass := Some("dev.lily.apps.Main")
   )
   .settings(
-    /*
-    Compile / resourceGenerators += Def.task {
-      val log = streams.value.log
-      log.info("!!! GENERATING RESOURCES !!!")
-
-      val frontendBuild = (frontend / Compile / fullLinkJS / scalaJSLinkerOutputDirectory).value
-      val outputDir     = (Compile / resourceManaged).value / "assets"
-
-      log.info(s"Build copy from ${frontendBuild} to ${outputDir}")
-      copyAll(frontendBuild, outputDir)
-    }.taskValue
-
-     */
-
     Compile / resourceGenerators += {
       Def.task[Seq[File]] {
         val log = streams.value.log
-        log.info("!!! GENERATING RESOURCES !!!")
+        log.info("🔥 Compiling and injecting frontend bundle. 🔥")
 
         copyAll(
           frontendBundle.value,
