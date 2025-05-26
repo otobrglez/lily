@@ -7,6 +7,7 @@ import dev.lily.lhtml.syntax.{*, given}
 import dev.lily.{ClientEvent, LiveView}
 import zio.ZIO.logWarning
 import zio.http.Path
+import zio.stream.ZStream
 import zio.{Task, UIO, ZIO}
 
 final case class MyTable(
@@ -16,8 +17,10 @@ final case class MyTable(
 )
 
 object TableExample extends LiveView[Any, MyTable]:
-  def state: UIO[MyTable] = ZIO.succeed(
-    MyTable(data = Map((1, 1) -> Some("10"), (1, 2) -> Some("30"), (2, 1) -> Some("32"), (3, 2) -> Some("11")))
+  def state = ZStream.fromZIO(
+    ZIO.succeed(
+      MyTable(data = Map((1, 1) -> Some("10"), (1, 2) -> Some("30"), (2, 1) -> Some("32"), (3, 2) -> Some("11")))
+    )
   )
 
   override def onEvent(state: MyTable, event: ClientEvent): ZIO[Any, Throwable, MyTable] = event match

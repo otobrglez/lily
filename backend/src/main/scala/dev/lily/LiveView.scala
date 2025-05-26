@@ -11,6 +11,7 @@ import zio.ZIO.{absolve, logError, logInfo}
 import zio.http.*
 import zio.http.ChannelEvent.*
 import zio.http.Method.GET
+import zio.stream.ZStream
 import zio.{Chunk, Ref, Task, UIO, ZIO}
 
 import scala.util.control.NoStackTrace
@@ -29,7 +30,7 @@ trait LiveHtml:
       )
 
 trait LiveView[-Env, S] extends LiveHtml:
-  protected def state: UIO[S]
+  protected def state: ZStream[Env, Throwable, S]
 
   // Method that handles events
   def onEvent(state: S, event: ClientEvent): ZIO[Env, Throwable, S]
@@ -38,8 +39,9 @@ trait LiveView[-Env, S] extends LiveHtml:
   def render(state: S, path: Path): ZIO[Env, Throwable, Html]
 
   final def mount(path: Path): ZIO[Env, Throwable, Html] = for
-    state <- state
-    html  <- render(state, path: Path)
+    maybeState <- state.runLast
+    state      <- ZIO.fromOption(maybeState).orElseFail(new RuntimeException("No state found"))
+    html       <- render(state, path: Path)
   yield html
 
   private def parseClientEvent(
@@ -55,10 +57,11 @@ trait LiveView[-Env, S] extends LiveHtml:
       .catchNonFatalOrDie(thHandler)
 
   final def run(channel: WebSocketChannel, path: Path): ZIO[Env, Throwable, Unit] = for
-    _        <- logInfo("LiveView started.")
-    stateRef <- state.flatMap(Ref.make(_))
-    htmlRef  <- mount(path).flatMap(Ref.make(_))
-    _        <-
+    _          <- logInfo("LiveView started.")
+    maybeState <- state.runCollect.map(_.last)
+    stateRef   <- Ref.make(maybeState)
+    htmlRef    <- mount(path).flatMap(Ref.make(_))
+    _          <-
       channel.receiveAll:
         case Read(WebSocketFrame.Binary(blob)) =>
           parseClientEvent(blob): clientEvent =>

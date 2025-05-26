@@ -6,10 +6,11 @@ import dev.lily.lhtml.Html
 import dev.lily.lhtml.syntax.{*, given}
 import dev.lily.{ClientEvent, LiveView}
 import zio.http.Path
+import zio.stream.ZStream
 import zio.{Task, UIO, ZIO}
 
 object CounterExample extends LiveView[Any, Int]:
-  def state: UIO[Int] = ZIO.succeed(0)
+  def state = ZStream.fromZIO(ZIO.succeed(0))
 
   def onEvent(state: Int, event: ClientEvent): Task[Int] = event match
     case on("increment" -> _) => ZIO.succeed(state + 1)
