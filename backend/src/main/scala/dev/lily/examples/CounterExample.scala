@@ -1,0 +1,33 @@
+package dev.lily.examples
+
+import dev.lily.ClientEvent.on
+import dev.lily.HTMLOps.{*, given}
+import dev.lily.lhtml.Html
+import dev.lily.lhtml.syntax.{*, given}
+import dev.lily.{ClientEvent, LiveView}
+import zio.http.Path
+import zio.{Task, UIO, ZIO}
+
+object CounterExample extends LiveView[Any, Int]:
+  def state: UIO[Int] = ZIO.succeed(0)
+
+  def onEvent(state: Int, event: ClientEvent): Task[Int] = event match
+    case on("increment" -> _) => ZIO.succeed(state + 1)
+    case on("decrement" -> _) => ZIO.succeed(state - 1)
+    case _                    => ZIO.succeed(state)
+
+  def render(n: Int, path: Path): Task[Html] = ZIO.succeed:
+    html(
+      head(title("Hello counter")),
+      bodyOn(path)(
+        h1("Lily - Counter example"),
+        p(a("&laquo; Back to examples").attr("href", "/")),
+        div(p(s"Counter is now: $n")),
+        div(p(s"Plus two is ${n + 2}")),
+        div(p(s"Some math: ${n * 1.2 * Math.PI}")),
+        div(
+          button("Increment").on("click" -> "increment"),
+          button("Decrement").on("click" -> "decrement")
+        )
+      )
+    )

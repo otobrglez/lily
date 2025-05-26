@@ -10,6 +10,11 @@ import dev.lily.lhtml.syntax.{*, given}
 import org.scalajs.dom
 import org.scalajs.dom.*
 import dev.lily.DomChanged.domChangedDecoder
+import scala.scalajs.js.typedarray.*
+import scala.scalajs.js.typedarray.Int8Array
+
+import scala.scalajs.js
+import scala.scalajs.js.JSON
 
 final private[fe] case class Lily private (
   private var statusBarUI: StatusBarUI,
@@ -29,12 +34,14 @@ final private[fe] case class Lily private (
     HtmlDiffDOMPatcher.patchDom(body, event.diff)
 
   private def connectToWS(): Unit =
+    socket.binaryType = "arraybuffer"
+
     socket.onmessage = (event: dom.MessageEvent) =>
       statusBarUI.incrementEventsReceived()
       for
-        data            <- Option(event.data).flatMap(s => Option(s.toString))
-        maybeDomChanged <- Option.when(data.contains("\"diff\""))(decode[DomChanged](data).toOption)
-        _                = maybeDomChanged.foreach(handleServerDOMChanged)
+        buffer     <- Option(event.data.asInstanceOf[ArrayBuffer]).map(b => new Int8Array(b).toArray)
+        domChanged <- Option.when(buffer.length > 0)(DomChanged.fromBinary(buffer).toOption)
+        _           = domChanged.foreach(handleServerDOMChanged)
       yield ()
 
     socket.onopen = (event: dom.Event) =>
@@ -56,6 +63,18 @@ final private[fe] case class Lily private (
     document.addEventListener("input", localEventHandler(_))
     document.addEventListener("mouseover", localEventHandler(_))
     document.addEventListener("mouseout", localEventHandler(_))
+    document.addEventListener("change", localEventHandler(_))
+    document.addEventListener("keydown", localEventHandler(_))
+    document.addEventListener("keypress", localEventHandler(_))
+    document.addEventListener("keyup", localEventHandler(_))
+
+  private def getData(e: HTMLElement): List[String] = (for
+    rawData <- Option(e.data("li-attached-data"))
+    pom     <- rawData
+                 .map(JSONSerde.singleQuotesToDoubleQuotes)
+                 .flatMap(rIn => Option(JSON.parse(rIn)))
+    values   = pom.asInstanceOf[js.Array[String]]
+  yield values.toList).getOrElse(List.empty)
 
   private def localEventHandler(e: dom.Event): Unit =
     var (eventType, target) = e.`type` -> e.target.asInstanceOf[HTMLElement]
@@ -66,24 +85,28 @@ final private[fe] case class Lily private (
       target.dataStartsWith("data-li-on-").foreach { case (_, (rawDataKey, value)) =>
         val (clientEventName, serverEventName) = rawDataKey.stripPrefix("data-li-on-") -> value
         if clientEventName == eventType then
-          val maybeValue: Option[String] = Option(target.asInstanceOf[HTMLInputElement].value)
-          emitClientEvent(e, serverEventName, maybeValue)
+          emitClientEvent(e, serverEventName, Option(target.asInstanceOf[HTMLInputElement].value), getData(target))
       }
 
       if target == null || target.parentElement == null then return
       target = target.parentElement
 
-  private def emitClientEvent(clientEvent: dom.Event, serverEventName: String, value: Option[String] = None): Unit =
+  private def emitClientEvent(
+    clientEvent: dom.Event,
+    serverEventName: String,
+    value: Option[String] = None,
+    data: List[String] = List.empty
+  ): Unit =
     var (clientEventName, target) = clientEvent.`type` -> clientEvent.target.asInstanceOf[HTMLElement]
     val liID                      = clientEvent.target.asInstanceOf[HTMLElement].data("idli")
-    socket.send(
-      ClientEvent(
-        clientEventName = clientEventName,
-        serverEventName = serverEventName,
-        liID = liID,
-        value = value
-      ).toProtocol
-    )
+    val buffer: ArrayBuffer       = ClientEvent(
+      serverEventName = serverEventName,
+      clientEventName = clientEventName,
+      liID = liID,
+      value = value,
+      data = data
+    ).toProtocol.toTypedArray.buffer
+    socket.send(buffer)
     statusBarUI.incrementEventSent()
 
 private[fe] object Lily:

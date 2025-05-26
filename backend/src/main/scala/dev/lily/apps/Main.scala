@@ -20,24 +20,25 @@ object Main extends ZIOAppDefault:
         html(
           head(
             title("Lily"),
-            meta().withAttr("charset" -> "utf-8"),
-            meta().withAttr("name"    -> "viewport", "content" -> "width=device-width, initial-scale=1")
+            meta().attr("charset" -> "utf-8"),
+            meta().attr("name"    -> "viewport", "content" -> "width=device-width, initial-scale=1")
           ),
           body(
             h1("Hello from Lily! 👋"),
             div(
               ul(
-                li(a("Live Clock Demo").withAttr("href", "/live-clock")),
-                li(a("Counter demo v2").withAttr("href", "/counter-v2"))
+                li(a("Counter example").attr("href", "/counter-v2")),
+                li(a("Table example").attr("href", "/tables"))
               )
-            ).withClass("main")
+            ).klass("main")
           )
         )
       )
     ),
     Method.GET / "api" / "hello" -> handler(Response.text("Hello, World!"))
   )
-    ++ LiveView.route(Path.empty / "counter-v2", examples.CounterView)
+    ++ LiveView.route(Path.empty / "counter-v2", examples.CounterExample)
+    ++ LiveView.route(Path.empty / "tables", examples.TableExample)
 
   private val staticMiddleware = Middleware.serveResources(Path.empty / "static", "assets")
   private val app              = routes @@ staticMiddleware @@ Middleware.debug

@@ -15,3 +15,29 @@ object JSONOps:
       obj
 
     def toJSON: String = JSON.stringify(toJsObject(e))
+
+object JSONSerde:
+  def singleQuotesToDoubleQuotes(singleQuotedJson: String): String =
+    var insideString = false
+    var isEscaping   = false
+    val result       = new StringBuilder()
+
+    for i <- 0 until singleQuotedJson.length do
+      val char = singleQuotedJson.charAt(i)
+
+      if isEscaping then
+        result.append(char)
+        isEscaping = false
+      else if char == '\\' then
+        result.append(char)
+        isEscaping = true
+      else if char == '\'' && !insideString then
+        result.append('"')
+        insideString = true
+      else if char == '\'' && insideString then
+        result.append('"')
+        insideString = false
+      else if char == '"' && insideString then result.append("\\\"")
+      else result.append(char)
+
+    result.toString()

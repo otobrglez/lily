@@ -19,12 +19,12 @@ final case class StatusBarUI private (
 ):
   private val spanPadding = "style" -> "padding: 5px;"
   private def render(): Html = div(
-    span("🌸 Lily").withAttr(spanPadding),
-    span(s"Loaded: ${statusBar.loaded}").withAttr(spanPadding),
-    span(s"Connected: ${statusBar.connected}").withAttr(spanPadding),
-    span(s"Events sent: ${statusBar.eventSent} ⬆").withAttr(spanPadding),
-    span(s"Events received: ${statusBar.eventReceived} ⬇").withAttr(spanPadding)
-  ).withAttr("style" ->
+    span("🌸 Lily").attr(spanPadding),
+    span(s"Loaded: ${statusBar.loaded}").attr(spanPadding),
+    span(s"Connected: ${statusBar.connected}").attr(spanPadding),
+    span(s"Events sent: ${statusBar.eventSent} ⬆").attr(spanPadding),
+    span(s"Events received: ${statusBar.eventReceived} ⬇").attr(spanPadding)
+  ).attr("style" ->
     """
       |position: fixed; bottom: 10px; right: 10px; display: inline-block; z-index: 999; font-size: 9pt;
       |padding: 5px; background-color: #000000; color: #ffffff; border-radius: 5px; font-family:monospace;

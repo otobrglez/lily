@@ -22,6 +22,7 @@ object Dependencies {
     val zioSchema: Version             = "1.7.2"
     val izumiReflect: Version          = "3.0.1"
     val scalaCollectionCompat: Version = "2.13.0"
+    val borer: Version                 = "1.16.1"
   }
 
   object JS {
@@ -38,6 +39,14 @@ object Dependencies {
         "io.circe" %%% "circe-generic",
         "io.circe" %%% "circe-parser"
       ).map(_ % Versions.circe)
+    )
+
+    lazy val cbor = Def.setting(
+      Seq(
+        "io.bullet" %%% "borer-core",
+        "io.bullet" %%% "borer-derivation",
+        "io.bullet" %%% "borer-compat-circe"
+      ).map(_ % Versions.borer)
     )
   }
 
@@ -97,6 +106,12 @@ object Dependencies {
     "io.circe" %% "circe-generic",
     "io.circe" %% "circe-parser"
   ).map(_ % Versions.circe)
+
+  lazy val cbor: Modules = Seq(
+    "io.bullet" %% "borer-core",
+    "io.bullet" %% "borer-derivation",
+    "io.bullet" %% "borer-compat-circe"
+  ).map(_ % Versions.borer)
 
   lazy val jwt: Modules = Seq(
     "com.github.jwt-scala" %% "jwt-core",

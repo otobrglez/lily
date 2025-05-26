@@ -43,10 +43,10 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
      */
   )
   .jsSettings(
-    libraryDependencies ++= { JS.coreJS.value ++ json }
+    libraryDependencies ++= { JS.coreJS.value ++ JS.json.value ++ JS.cbor.value }
   )
   .jvmSettings(
-    libraryDependencies ++= { zio ++ json },
+    libraryDependencies ++= { zio ++ json ++ cbor },
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
 

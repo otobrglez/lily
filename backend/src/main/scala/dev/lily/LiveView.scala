@@ -7,78 +7,81 @@ import dev.lily.WebSocketOps.{*, given}
 import dev.lily.lhtml.syntax.{*, given}
 import dev.lily.lhtml.{Html, HtmlDiff}
 import zio.Console.printLine
-import zio.ZIO.{logError, logInfo}
+import zio.ZIO.{absolve, logError, logInfo}
 import zio.http.*
 import zio.http.ChannelEvent.*
 import zio.http.Method.GET
-import zio.{Ref, Task, UIO, ZIO}
+import zio.{Chunk, Ref, Task, UIO, ZIO}
 
 import scala.util.control.NoStackTrace
 
 trait LiveHtml:
-  final def head(children: Html*): Html = Html.html(
-    (children.toSeq :+ script().withAttr("src" -> "/static/main.js"))*
+  final def head(children: Html*): Html               = Html.html(
+    (children.toSeq :+ script().attr("src" -> "/static/main.js"))*
   )
-  final def body(children: Html*): Html =
+  final def bodyOn(path: Path)(children: Html*): Html =
     Html
       .body(children*)
-      .withData(
+      .data(
         "li-reload-on-disconnect" -> "true",
         "li-reload-timeout"       -> "1000",
-        "li-ws-path"              -> "/counter-v2/ws" // TODO: move this
+        "li-ws-path"              -> path.toString
       )
 
-trait LiveView[S] extends LiveHtml:
+trait LiveView[-Env, S] extends LiveHtml:
   protected def state: UIO[S]
 
-  def render(state: S): Task[Html]
-  def handle(state: S, event: ClientEvent): Task[S]
+  // Method that handles events
+  def onEvent(state: S, event: ClientEvent): ZIO[Env, Throwable, S]
 
-  final def mount: ZIO[Any, Throwable, Html] = for
+  // Method that actually renders the view
+  def render(state: S, path: Path): ZIO[Env, Throwable, Html]
+
+  final def mount(path: Path): ZIO[Env, Throwable, Html] = for
     state <- state
-    html  <- render(state)
+    html  <- render(state, path: Path)
   yield html
 
   private def parseClientEvent(
-    raw: String
+    blob: Chunk[Byte]
   )(
-    action: ClientEvent => Task[Unit],
-    thHandler: Throwable => UIO[Unit] = th => logError("Unknown message")
-  ): UIO[Unit] =
+    action: ClientEvent => ZIO[Env, Throwable, Unit],
+    thHandler: Throwable => ZIO[Env, Nothing, Unit] = th => logError("Unknown message")
+  ): ZIO[Env, Throwable, Unit] =
     ZIO
-      .fromEither(ClientEvent.fromProtocol(raw))
+      .fromEither(ClientEvent.fromBinary(blob.toArray))
       .mapError(new RuntimeException(_) with NoStackTrace)
       .flatMap(action)
       .catchNonFatalOrDie(thHandler)
 
-  final def run(channel: WebSocketChannel): Task[Unit] = for
+  final def run(channel: WebSocketChannel, path: Path): ZIO[Env, Throwable, Unit] = for
     _        <- logInfo("LiveView started.")
     stateRef <- state.flatMap(Ref.make(_))
-    htmlRef  <- mount.flatMap(Ref.make(_))
+    htmlRef  <- mount(path).flatMap(Ref.make(_))
     _        <-
       channel.receiveAll:
-        case Read(WebSocketFrame.Text(text)) =>
-          parseClientEvent(text): clientEvent =>
+        case Read(WebSocketFrame.Binary(blob)) =>
+          parseClientEvent(blob): clientEvent =>
             for
-              _        <- printLine(s"Got client event: $clientEvent")
               oldState <- stateRef.get
-              newState <- handle(oldState, clientEvent)
-              _        <- printLine(s"New state: $newState")
               oldHtml  <- htmlRef.get
-              newHtml  <- render(newState)
+              newState <- onEvent(oldState, clientEvent)
+              newHtml  <- render(newState, path)
               domDiff  <- ZIO.attempt(HtmlDiff.unsafeOnlyBody(oldHtml, newHtml))
               _        <- stateRef.set(newState)
               _        <- htmlRef.set(newHtml)
-              _        <- channel.sendString(domChangedEncoder(DomChanged(domDiff)).noSpaces)
+              _        <- channel.sendBinary(DomChanged(domDiff).toProtocol)
             yield ()
 
-        case x => logInfo(s"Got something else -> ${x}")
+        case x => logInfo(s"Got something else: $x")
   yield ()
 
 object LiveView:
-  def route[S](path: Path, view: LiveView[S]): Routes[Any, Nothing] =
+  def route[Env, S](path: Path, view: LiveView[Env, S]): Routes[Env, Nothing] /* : Routes[Any, Nothing] */ =
     val (mainPath, wsPath) = path -> path / "ws"
     Routes(
-      RoutePattern(GET, wsPath)   -> handler(Handler.webSocket(channel => view.run(channel).orDie).toResponse),
-      RoutePattern(GET, mainPath) -> Handler.fromZIO(view.mount.map(Response.html(_)).orDie)
+      RoutePattern(GET, wsPath)   -> Handler.fromZIO(
+        Handler.webSocket(channel => view.run(channel, wsPath).orDie).toResponse
+      ),
+      RoutePattern(GET, mainPath) -> Handler.fromFunctionZIO(_ => view.mount(wsPath).map(Response.html(_)).orDie)
     )

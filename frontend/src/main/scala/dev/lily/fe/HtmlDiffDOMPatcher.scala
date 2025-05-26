@@ -47,8 +47,9 @@ object HtmlDiffDOMPatcher:
   /** Apply attribute changes to a DOM element */
   private def applyAttrDiffs(el: dom.Element, diffs: List[AttrChanged]): Unit =
     diffs.foreach {
-      case AttrChanged(k, _, Some(v)) => el.setAttribute(k, v)
-      case AttrChanged(k, _, None)    => el.removeAttribute(k)
+      case AttrChanged("value", _, Some(value)) => el.asInstanceOf[HTMLInputElement].value = value
+      case AttrChanged(k, _, Some(v))           => el.setAttribute(k, v)
+      case AttrChanged(k, _, None)              => el.removeAttribute(k)
     }
 
   private def patchChildren(el: dom.Element, diff: ChangeChildren): Unit =

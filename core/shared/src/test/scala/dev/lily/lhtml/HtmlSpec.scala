@@ -20,11 +20,11 @@ object HtmlSpec extends ZIOSpecDefault:
             )
           ),
           div(
-            div(text("World")).withId("test").withClass("hello").withData("lily-test" -> "true")
+            div(text("World")).id("test").klass("hello").withData("lily-test" -> "true")
           ),
           ul(li("Hello"), li("World"))
-        ).withClass("main")
-          .withClass("test")
+        ).klass("main")
+          .klass("test")
           .withData("lily-test" -> "true")
       )
 
