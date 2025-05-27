@@ -72,7 +72,7 @@ lazy val backend = (project in file("backend"))
   .settings(
     name                 := "backend",
     scalaVersion         := scalaVersion.value,
-    libraryDependencies ++= { zio ++ jwt ++ logging },
+    libraryDependencies ++= { zio ++ jwt ++ logging ++ markdownAndJsoup },
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     assembly / mainClass := Some("dev.lily.apps.Main")
   )

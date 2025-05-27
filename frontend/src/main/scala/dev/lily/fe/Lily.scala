@@ -10,9 +10,10 @@ import dev.lily.lhtml.syntax.{*, given}
 import org.scalajs.dom
 import org.scalajs.dom.*
 import dev.lily.DomChanged.domChangedDecoder
+
+import scala.collection.mutable.ArrayBuffer as AB
 import scala.scalajs.js.typedarray.*
 import scala.scalajs.js.typedarray.Int8Array
-
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 
@@ -24,18 +25,28 @@ final private[fe] case class Lily private (
   private val reloadOnDisconnect: Boolean,
   private val reloadTimeout: Double
 ):
+  private val domChangesBuffer        = AB.empty[DomChanged]
+  private var animationFrameRequested = false
+
   private def load(event: dom.Event): Unit =
     statusBarUI.setLoaded()
     console.info(s"Lily activated. Connecting to \"$wsPath\"")
     connectToWS()
     attachEventHandlers()
 
+  private def processDomChangesBuffer(): Unit =
+    domChangesBuffer.foreach(event => HtmlDiffDOMPatcher.patchDom(body, event.diff))
+    domChangesBuffer.clear()
+    animationFrameRequested = false
+
   private def handleServerDOMChanged(event: DomChanged): Unit =
-    HtmlDiffDOMPatcher.patchDom(body, event.diff)
+    domChangesBuffer.append(event)
+    if !animationFrameRequested then
+      animationFrameRequested = true
+      window.requestAnimationFrame(_ => processDomChangesBuffer())
 
   private def connectToWS(): Unit =
     socket.binaryType = "arraybuffer"
-
     socket.onmessage = (event: dom.MessageEvent) =>
       statusBarUI.incrementEventsReceived()
       for
@@ -112,10 +123,11 @@ final private[fe] case class Lily private (
 private[fe] object Lily:
   def load(statusBarUI: StatusBarUI, body: HTMLElement, event: dom.Event): Unit = for
     wsPath             <- body.data("li-ws-path")
+    _                   = console.log("ws path ", wsPath)
     reloadOnDisconnect <-
       body
         .data("li-reload-on-disconnect")
-        .flatMap(p => Option.when(p.contains("true"))(true))
+        .flatMap(p => Option.when(p.contains("true") && wsPath.nonEmpty)(true))
         .orElse(Some(false))
     reloadTimeout      <- body.data("li-reload-timeout").flatMap(_.toDoubleOption).orElse(Some(2000d))
     webSocket           = new dom.WebSocket(wsPath)

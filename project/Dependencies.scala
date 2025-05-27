@@ -23,6 +23,7 @@ object Dependencies {
     val izumiReflect: Version          = "3.0.1"
     val scalaCollectionCompat: Version = "2.13.0"
     val borer: Version                 = "1.16.1"
+    val jsoup: Version                 = "1.20.1"
   }
 
   object JS {
@@ -117,6 +118,11 @@ object Dependencies {
     "com.github.jwt-scala" %% "jwt-core",
     "com.github.jwt-scala" %% "jwt-circe"
   ).map(_ % "10.0.4")
+
+  lazy val markdownAndJsoup: Modules = Seq(
+    "org.commonmark" % "commonmark" % "0.24.0",
+    "org.jsoup"      % "jsoup"      % Versions.jsoup
+  )
 
   lazy val projectResolvers: Seq[MavenRepository] = Seq(
     // Resolver.sonatypeOssRepos("snapshots"),
