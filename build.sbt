@@ -62,8 +62,15 @@ lazy val frontend = (project in file("frontend"))
       org.scalajs.linker.interface.ModuleInitializer
         .mainMethod("dev.lilly.fe.Main", "main")
     ), */
-    libraryDependencies ++= { zio ++ JS.coreJS.value ++ JS.json.value }
-    // Compile / fullLinkJS / artifactPath := baseDirectory.value / "target" / "lily.js"
+
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
+    libraryDependencies ++= { zio ++ JS.coreJS.value ++ JS.json.value },
+    Compile / fastOptJS / moduleName    := "lily",
+    Compile / fullOptJS / moduleName    := "lily",
+    Compile / fastOptJS / artifactPath  := baseDirectory.value / "lily.js",
+    Compile / fullOptJS / artifactPath  := baseDirectory.value / "lily.js",
+    Compile / fastLinkJS / artifactPath := baseDirectory.value / "target" / "lily.js",
+    Compile / fullLinkJS / artifactPath := baseDirectory.value / "target" / "lily.js"
   )
 
 lazy val backend = (project in file("backend"))
@@ -83,7 +90,7 @@ lazy val backend = (project in file("backend"))
         log.info("🔥 Compiling and injecting frontend bundle. 🔥")
 
         copyAll(
-          frontendBundle.value,
+          frontendOptBundle.value,
           (Compile / resourceManaged).value / "assets"
         )
       }
@@ -94,6 +101,12 @@ lazy val frontendBundle = taskKey[File]("")
 ThisBuild / frontendBundle := Def.task {
   val res = (frontend / Compile / fastLinkJS).value
   (frontend / Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+}.value
+
+lazy val frontendOptBundle = taskKey[File]("")
+ThisBuild / frontendOptBundle := Def.task {
+  val res = (frontend / Compile / fullLinkJS).value
+  (frontend / Compile / fullLinkJS / scalaJSLinkerOutputDirectory).value
 }.value
 
 addCommandAlias("fmt", ";scalafmtAll;scalafmtSbt")

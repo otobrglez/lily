@@ -1,6 +1,6 @@
 package dev.lily
 
-import dev.lily.lhtml.Html
+import dev.lily.lhtml.{Html, HtmlIdEnhancer}
 import dev.lily.lhtml.syntax.{*, given}
 import zio.ZIO
 import zio.http.template.Html as ZIOHtml
@@ -39,4 +39,9 @@ object HTMLOps:
           stringListToJsonArray(attachedData, useSingleQuotes = true)
         )
 
+    def addIDs(start: Int = 999): Html           = HtmlIdEnhancer.addNumericIDs(h, start)
+    def addRandomIDs(stringSize: Int = 10): Html = HtmlIdEnhancer.addRandomIDs(h, stringSize = 10)
+
+    // This will signal Diffing algorithm to replace the whole child below.
+    def forceReplace: Html = h.data("force-replace" -> s"force-${scala.util.Random.nextLong(20_000L)}")
   given Conversion[Html, ZIOHtml] = asZIOHtml

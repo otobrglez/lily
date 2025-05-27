@@ -5,7 +5,7 @@ import dev.lily.HTMLOps.{*, given}
 import dev.lily.lhtml.Html
 import dev.lily.lhtml.syntax.{*, given}
 import dev.lily.{ClientEvent, LiveView}
-import zio.ZIO.{logInfo, logWarning}
+import zio.ZIO.logWarning
 import zio.http.Path
 import zio.stream.ZStream
 import zio.{Ref, Task, ZIO}
@@ -55,9 +55,7 @@ final case class TableExample private (private val tableRef: Ref[MyTable]) exten
         (for r <- 1 to state.rows; c <- 1 to state.columns yield (r, c) -> Some(random.between(1, 1001).toString)).toMap
       tableRef.updateAndGet(_.copy(data =
         val oldData = state.data
-        newData.foldLeft(oldData) { case (acc, (pos, value)) =>
-          acc + (pos -> value)
-        }
+        newData.foldLeft(oldData) { case (acc, (pos, value)) => acc + (pos -> value) }
       ))
     case onData("removeRowAt", _, List(row))           =>
       tableRef.updateAndGet(_.copy(data = state.data.filterNot(_._1._1 == row.toInt)))

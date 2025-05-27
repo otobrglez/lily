@@ -19,7 +19,7 @@ object Examples extends LiveHtml:
       |table tbody tr:nth-child(even) td { background-color: #EEE; }
       |table { border-collapse: collapse; }
       |table tr td { border-top: 1px solid #EEE; }
-      |div.content { margin: 0 auto; width: 960px; padding: 20px }
+      |div.content { margin: 0 auto; max-width: 1200px; padding: 20px }
       |.tools button { margin-right: 10px; } """.stripMargin
 
   def layout(pageTitle: Option[String], path: Option[Path] = Some(Path.empty), moreCss: Option[String] = None)(

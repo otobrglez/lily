@@ -2,7 +2,7 @@ package dev.lily.examples
 
 import dev.lily.ClientEvent.on
 import dev.lily.HTMLOps.{*, given}
-import dev.lily.lhtml.Html
+import dev.lily.lhtml.{Html, HtmlIdEnhancer}
 import dev.lily.lhtml.syntax.{*, given}
 import dev.lily.{ClientEvent, LiveView}
 import zio.ZIO.{logError, logInfo}
@@ -13,6 +13,8 @@ import dev.lily.ClientEvent.{on, onData}
 import org.commonmark.node.*
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
+
+import scala.util.Random.javaRandomToRandom
 
 type Markdown = String
 
@@ -28,7 +30,8 @@ object Markdown:
     parser   <- ZIO.attempt(Parser.builder().build())
     node     <- ZIO.attempt(parser.parse(raw))
     renderer <- ZIO.attempt(HtmlRenderer.builder().build())
-    clean     = minifyHtml(renderer.render(node))
+    clean     = renderer.render(node)
+  // clean     = minifyHtml(renderer.render(node))
   yield clean
 
 type OutputHtml = Html
@@ -59,21 +62,22 @@ final case class MarkdownEditor(
 
   override def onEvent(state: (Markdown, OutputHtml), event: ClientEvent): Task[(Markdown, OutputHtml)] =
     event match
+      case on("set", None)        =>
+        ZIO.succeed("" -> "")
       case on("set", Some(value)) =>
+        val cleanValue = value.strip().trim
         for
-          markdown <- Markdown
-                        .render(value.strip().trim)
-                        .tap(m => zio.Console.printLine(m))
-
-          html <- ZIO
-                    .succeed(markdown)
-                    .flatMap(r => ZIO.attempt(HtmlFromJsoup.fromString(r)))
-                    .tap(m => zio.Console.printLine(m))
-                    .map(html => div(html).klass("my-markdown"))
-                    .catchAll(th => ZIO.succeed(div("Error rendering markdown: " + th.getMessage)))
-          cMD  <- md.set(value)
-          _    <- output.set(html)
-        yield value -> html
+          _        <- md.set(cleanValue)
+          _        <- zio.Console.printLine(s"VALUE: ${cleanValue}")
+          markdown <- Markdown.render(cleanValue)
+          html     <- ZIO
+                        .succeed(markdown)
+                        .flatMap(r => ZIO.attempt(HtmlFromJsoup.fromString(r)))
+                        // .map(html => HtmlIdEnhancer.addNumericIDs(html, start = 100))
+                        // .map(html => div(div(Seq(html)), div("")).klass("my-markdown"))
+                        .catchAll(th => ZIO.succeed(div("Error rendering markdown: " + th.getMessage)))
+          newH     <- output.updateAndGet(_ => html)
+        yield cleanValue -> html
       case _                      => ZIO.succeed(state)
 
   private val css: String =
@@ -95,7 +99,7 @@ final case class MarkdownEditor(
       |  width: 50%;
       |  height: 100%;
       |  box-sizing: border-box;
-      |  padding: 1rem;
+      |  padding: 0.45rem;
       |  overflow: auto;
       |}
       |.editor-input {
@@ -114,6 +118,7 @@ final case class MarkdownEditor(
       |
       |""".stripMargin
 
+  private val random                                                         = scala.util.Random
   override def render(state: (Markdown, OutputHtml), path: Path): Task[Html] = ZIO.succeed:
     Examples.layout(Some("Markdown Editor"), Some(path), Some(css))(
       h1("Markdown Editor"),
@@ -128,7 +133,7 @@ final case class MarkdownEditor(
           ).klass("editor-left"),
           div(
             div(state._2).klass("preview-content")
-          ).klass("editor-right")
+          ).klass("editor-right").forceReplace
         ).klass("editor-inner")
       ).klass("editor")
     )

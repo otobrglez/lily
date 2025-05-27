@@ -145,7 +145,7 @@ object Html:
   def renderWithIndent(html: Html, indentSize: Int = 2): String      = HtmlRender.render(html, indentSize)
   def renderToJson(html: Html, prettyPrint: Boolean = false): String = HtmlJsonRenderer.renderToJson(html, prettyPrint)
 
-  def attachLIIDs(html: Html, start: Int = 0): Html = HtmlIdEnhancer.addIds(html, start)
+  def attachLIIDs(html: Html, start: Int = 0): Html = HtmlIdEnhancer.addNumericIDs(html, start)
 
 object syntax:
   // import Html.{*, given}
