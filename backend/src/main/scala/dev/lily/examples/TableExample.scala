@@ -36,7 +36,7 @@ object TableExample:
 final case class TableExample private (private val tableRef: Ref[MyTable]) extends LiveView[Any, MyTable]:
   def state = ZStream.fromZIO(tableRef.get)
 
-  override def onEvent(state: MyTable, event: ClientEvent): ZIO[Any, Throwable, MyTable] = event match
+  override def onEvent(state: MyTable, event: ClientEvent): Task[MyTable] = event match
     case onData("set", Some(value), List(row, column)) =>
       tableRef.updateAndGet(_.copy(data = state.data + ((row.toInt, column.toInt) -> Some(value))))
     case on("addRow", _)                               =>
