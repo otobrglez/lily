@@ -90,7 +90,7 @@ lazy val backend = (project in file("backend"))
         log.info("🔥 Compiling and injecting frontend bundle. 🔥")
 
         copyAll(
-          frontendOptBundle.value,
+          frontendBundle.value,
           (Compile / resourceManaged).value / "assets"
         )
       }
