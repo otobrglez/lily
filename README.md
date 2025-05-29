@@ -50,7 +50,7 @@ private val routes =
 - Lily can be interactively developed with the help of `sbt-revolver` with:
 
  ```bash
- sbt ~backend/reStart
+ sbt ~apps/reStart
  sbt ~core/test
  ```
 
