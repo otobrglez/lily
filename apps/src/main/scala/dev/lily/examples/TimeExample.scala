@@ -10,12 +10,15 @@ import zio.{durationInt, Schedule, ZIO}
 import java.time.{LocalDateTime, ZoneId}
 
 object TimeExample extends LiveView[Any, LocalDateTime]:
-  def state = ZStream
-    .repeatZIO(ZIO.succeed(LocalDateTime.now(ZoneId.of("CET"))))
-    .schedule(Schedule.spaced(10.millis))
-    .changes
+  def state =
+    ZStream
+      .repeatZIO(ZIO.succeed(LocalDateTime.now(ZoneId.of("CET"))))
+      .schedule(Schedule.spaced(10.millis))
+      .changes
 
-  override def render(time: LocalDateTime, path: Path): ZIO[Any, Throwable, Html] = ZIO.succeed:
+  def on(s: LocalDateTime): TimeExample.Handler = emptyHandler
+
+  def render(time: LocalDateTime, path: Path): ZIO[Any, Throwable, Html] = ZIO.succeed:
     Examples.layout(Some("Table example"), Some(path))(
       h1("Lily - Time example"),
       p("This example shows the live time on the server."),

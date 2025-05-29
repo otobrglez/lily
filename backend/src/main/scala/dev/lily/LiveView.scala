@@ -18,10 +18,10 @@ import zio.{Chunk, Promise, Ref, Scope, Task, UIO, ZIO}
 import scala.util.control.NoStackTrace
 
 trait LiveHtml:
-  final def head(children: Html*): Html               = Html.html(
+  final def head(children: Html*): Html = Html.html(
     (children.toSeq :+ script().attr("src" -> "/static/main.js"))*
   )
-  
+
   final def bodyOn(path: Path)(children: Html*): Html = bodyOn(Some(path))(children*)
 
   final def bodyOn(path: Option[Path] = None)(children: Html*): Html =
@@ -33,14 +33,24 @@ trait LiveHtml:
       )
   final def body(children: Html*): Html                              = bodyOn(None)(children*)
 
-trait LiveView[-Env, S] extends LiveHtml:
+trait LiveView[Env, S] extends LiveHtml:
+  protected val emptyState: ZStream[Env, Throwable, S] = ZStream.empty
   protected def state: ZStream[Env, Throwable, S]
 
-  // Method that handles events
-  def onEvent(state: S, event: ClientEvent): ZIO[Env, Throwable, S] = ZIO.succeed(state)
+  // protected def onEvent(state: S, event: ClientEvent): ZIO[Env, Throwable, S] = ZIO.succeed(state)
+  protected def render(state: S, path: Path): ZIO[Env, Throwable, Html]
 
-  // Method that actually renders the view
-  def render(state: S, path: Path): ZIO[Env, Throwable, Html]
+  private def executeOn(
+    state: S,
+    handlers: PartialFunction[ClientEvent, ZIO[Env, Throwable, S]],
+    fallback: (S, ClientEvent) => ZIO[Env, Throwable, S] = (state, _) => ZIO.succeed(state)
+  ): (S, ClientEvent) => ZIO[Env, Throwable, S] =
+    (state, event) => handlers.lift(event).getOrElse(fallback(state, event))
+
+  type Handler = PartialFunction[ClientEvent, ZIO[Env, Throwable, S]]
+  final protected val emptyHandler: Handler = PartialFunction.empty
+  PartialFunction.empty[ClientEvent, ZIO[Env, Throwable, S]]
+  def on(s: S): Handler
 
   final def mount(path: Path): ZIO[Env, Throwable, Html] = for
     maybeState <- state.runHead
@@ -63,9 +73,6 @@ trait LiveView[-Env, S] extends LiveHtml:
   final def run(socket: WebSocketChannel, path: Path): ZIO[Env, Throwable, Unit] = ZIO.scoped:
     for
       _ <- logInfo(s"LiveView started on ${path}")
-      // firstState <- Promise.make[Nothing, S]
-      // latestState <- zio.Queue.unbounded[S]
-      // latestDom   <- zio.Queue.unbounded[Html]
 
       currentState <- Ref.make[Option[S]](None)
       domRef       <- Ref.make[Option[Html]](None)
@@ -104,7 +111,9 @@ trait LiveView[-Env, S] extends LiveHtml:
                 _        <- (oldState, oldHtml) match
                               case (Some(old), Some(oldHtml)) =>
                                 for
-                                  newState <- onEvent(old, clientEvent)
+                                  // newState <- onEvent(old, clientEvent)
+                                  // newState <- on(old, clientEvent)
+                                  newState <- executeOn(old, on(old))(old, clientEvent)
                                   newHtml  <- render(newState, path)
                                   domDiff  <- ZIO.attempt(HtmlDiff.unsafeOnlyBody(oldHtml, newHtml))
                                   _        <- currentState.set(Some(newState))
@@ -118,10 +127,12 @@ trait LiveView[-Env, S] extends LiveHtml:
                                   _          <-
                                     maybeState.fold(logWarning("No state found")) { newState =>
                                       for
-                                        newState <- onEvent(newState, clientEvent)
-                                        newHtml  <- render(newState, path)
-                                        _        <- currentState.set(Some(newState))
-                                        _        <- domRef.set(Some(newHtml))
+                                        //                                       newState <- onEvent(newState, clientEvent)
+                                        newState <- executeOn(newState, on(newState))(newState, clientEvent)
+
+                                        newHtml <- render(newState, path)
+                                        _       <- currentState.set(Some(newState))
+                                        _       <- domRef.set(Some(newHtml))
                                       yield ()
                                     }
                                 yield ()
@@ -133,39 +144,8 @@ trait LiveView[-Env, S] extends LiveHtml:
       _ <- socketFib.join
     yield ()
 
-/*
-  final def run(channel: WebSocketChannel, path: Path): ZIO[Env, Throwable, Unit] = for
-    _          <- logInfo("LiveView started.")
-    maybeState <- state.runHead
-    state      <- ZIO.fromOption(maybeState).orElseFail(new RuntimeException("No state found"))
-    _          <- logInfo(s"State collected - ${maybeState}")
-
-    stateObF <- state.tap { s =>
-                  logInfo(s"New state --> ${s}")
-                }.runDrain.fork
-    stateRef <- Ref.make(maybeState)
-    htmlRef  <- mount(path).flatMap(Ref.make(_))
-    _        <-
-      channel.receiveAll:
-        case Read(WebSocketFrame.Binary(blob)) =>
-          parseClientEvent(blob): clientEvent =>
-            for
-              oldState <- stateRef.get
-              oldHtml  <- htmlRef.get
-              newState <- onEvent(oldState, clientEvent)
-              newHtml  <- render(newState, path)
-              domDiff  <- ZIO.attempt(HtmlDiff.unsafeOnlyBody(oldHtml, newHtml))
-              _        <- stateRef.set(newState)
-              _        <- htmlRef.set(newHtml)
-              _        <- channel.sendBinary(DomChanged(domDiff).toProtocol)
-            yield ()
-
-        case x => logInfo(s"Got something else: $x")
-    _        <- stateObF.join
-  yield ()
- */
 object LiveView:
-  def route[Env, S](path: Path, view: LiveView[Env, S]): Routes[Env, Nothing] /* : Routes[Any, Nothing] */ =
+  def route[Env, S](path: Path, view: LiveView[Env, S]): Routes[Env, Nothing] =
     val (mainPath, wsPath) = path -> path / "ws"
     Routes(
       RoutePattern(GET, wsPath)   -> Handler.fromZIO(

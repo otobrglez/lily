@@ -71,7 +71,6 @@ object Dependencies {
     "dev.zio" %% "zio-schema-json",
     "dev.zio" %% "zio-schema-zio-test",
     "dev.zio" %% "zio-schema-derivation"
-    // "org.scala-lang" % "scala-reflect"  % scalaVersion.value % "provided" // Needed ?
   ).map(_ % Versions.zioSchema) ++ Seq(
     "dev.zio" %% "zio-metrics-connectors",
     "dev.zio" %% "zio-metrics-connectors-prometheus"
@@ -125,7 +124,6 @@ object Dependencies {
   )
 
   lazy val projectResolvers: Seq[MavenRepository] = Seq(
-    // Resolver.sonatypeOssRepos("snapshots"),
     "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases",
     "Sonatype snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     "Sonatype staging" at "https://oss.sonatype.org/content/repositories/staging",

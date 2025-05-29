@@ -34,13 +34,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     scalaVersion     := scalaVersion.value,
     buildInfoKeys    := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "dev.lily.info"
-    /*
-    libraryDependencies ++= List(
-        "dev.zio"                %%% "izumi-reflect"           % Versions.izumiReflect,
-       "org.scala-lang.modules" %%% "scala-collection-compat" % Versions.scalaCollectionCompat
-    )
-
-     */
   )
   .jsSettings(
     libraryDependencies ++= { JS.coreJS.value ++ JS.json.value ++ JS.cbor.value }
@@ -95,6 +88,17 @@ lazy val backend = (project in file("backend"))
         )
       }
     }
+  )
+
+lazy val apps = (project in file("apps"))
+  .dependsOn(backend)
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    name                 := "apps",
+    scalaVersion         := scalaVersion.value,
+    libraryDependencies ++= { zio ++ jwt ++ logging ++ markdownAndJsoup },
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    assembly / mainClass := Some("dev.lily.apps.Main")
   )
 
 lazy val frontendBundle = taskKey[File]("")

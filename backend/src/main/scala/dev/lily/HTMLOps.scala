@@ -1,8 +1,7 @@
 package dev.lily
 
-import dev.lily.lhtml.{Html, HtmlIdEnhancer}
 import dev.lily.lhtml.syntax.{*, given}
-import zio.ZIO
+import dev.lily.lhtml.{Html, HtmlIdEnhancer}
 import zio.http.template.Html as ZIOHtml
 
 object HTMLOps:
@@ -28,7 +27,6 @@ object HTMLOps:
     private def stringListToJsonArray(strings: List[String], useSingleQuotes: Boolean = false): String =
       val quoteChar     = if useSingleQuotes then "'" else "\""
       val escapedValues = strings.map(s => s"$quoteChar${escapeJsonString(s)}$quoteChar")
-
       "[" + escapedValues.mkString(",") + "]"
 
     def on(clientEvent: String, serverEvent: String, attachedData: List[String] = List.empty): Html =

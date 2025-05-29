@@ -8,15 +8,12 @@ import scala.jdk.CollectionConverters.*
 object HtmlFromJsoup:
   def fromString(html: String): Html =
     val document = org.jsoup.Jsoup.parseBodyFragment(html)
-    // val document = org.jsoup.Jsoup.parse(s"""<html><body><div class=\"root\"">${html}</div></body></html>""")
-
-
     val body     = document.body()
     val children = body.childNodes().asScala.map(nodeToHtml).toList
     children match
       case Nil      => Html.text("")
       case h :: Nil => h
-      case many     => Html.div(many*) // Wrap in div if there's more than one
+      case many     => Html.div(many*)
 
   private def nodeToHtml(node: Node): Html =
     node match

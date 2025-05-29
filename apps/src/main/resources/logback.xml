@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <!-- <Pattern>%d{HH:mm:ss.SSS} [%thread] [%kvp] %-5level %logger{36} %msg%n</Pattern> -->
+            <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{24} %msg%n</Pattern>
+        </layout>
+    </appender>
+
+    <turboFilter class="ch.qos.logback.classic.turbo.MarkerFilter">
+        <Name>CONFIDENTIAL_FILTER</Name>
+        <Marker>CONFIDENTIAL</Marker>
+        <OnMatch>DENY</OnMatch>
+    </turboFilter>
+
+    <appender name="Sentry" class="io.sentry.logback.SentryAppender">
+        <!-- Optionally change minimum Event level. Default for Events is ERROR -->
+        <minimumEventLevel>WARN</minimumEventLevel>
+        <!-- Optionally change minimum Breadcrumbs level. Default for Breadcrumbs is INFO -->
+        <minimumBreadcrumbLevel>DEBUG</minimumBreadcrumbLevel>
+    </appender>
+
+    <logger name="dev.lily" level="DEBUG"/>
+    <logger name="dev.lily.sandbox.CachedLayer" level="INFO"/>
+
+    <logger name="io.netty" level="INFO"/>
+    <logger name="org.quartz" level="WARN"/>
+
+    <root level="${APP_LOG_LEVEL:-INFO}">
+        <appender-ref ref="STDOUT"/>
+        <!-- <appender-ref ref="Sentry"/> -->
+    </root>
+</configuration>

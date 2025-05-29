@@ -60,25 +60,20 @@ final case class MarkdownEditor(
 ) extends LiveView[Any, (Markdown, OutputHtml)]:
   def state = ZStream.fromZIO(md.get <*> output.get)
 
-  override def onEvent(state: (Markdown, OutputHtml), event: ClientEvent): Task[(Markdown, OutputHtml)] =
-    event match
-      case on("set", None)        =>
-        ZIO.succeed("" -> "")
-      case on("set", Some(value)) =>
-        val cleanValue = value.strip().trim
-        for
-          _        <- md.set(cleanValue)
-          _        <- zio.Console.printLine(s"VALUE: ${cleanValue}")
-          markdown <- Markdown.render(cleanValue)
-          html     <- ZIO
-                        .succeed(markdown)
-                        .flatMap(r => ZIO.attempt(HtmlFromJsoup.fromString(r)))
-                        // .map(html => HtmlIdEnhancer.addNumericIDs(html, start = 100))
-                        // .map(html => div(div(Seq(html)), div("")).klass("my-markdown"))
-                        .catchAll(th => ZIO.succeed(div("Error rendering markdown: " + th.getMessage)))
-          newH     <- output.updateAndGet(_ => html)
-        yield cleanValue -> html
-      case _                      => ZIO.succeed(state)
+  def on(s: (Markdown, OutputHtml)): Handler =
+    case on("set", None)        => ZIO.succeed("" -> "")
+    case on("set", Some(value)) =>
+      val cleanValue = value.strip().trim
+      for
+        _        <- md.set(cleanValue)
+        _        <- zio.Console.printLine(s"VALUE: ${cleanValue}")
+        markdown <- Markdown.render(cleanValue)
+        html     <- ZIO
+                      .succeed(markdown)
+                      .flatMap(r => ZIO.attempt(HtmlFromJsoup.fromString(r)))
+                      .catchAll(th => ZIO.succeed(div("Error rendering markdown: " + th.getMessage)))
+        newH     <- output.updateAndGet(_ => html)
+      yield cleanValue -> html
 
   private val css: String =
     """

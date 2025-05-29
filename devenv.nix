@@ -11,20 +11,19 @@
   };
 
   packages = [ 
-  	pkgs.git
+    pkgs.git
     pkgs.kubectl
     pkgs.k9s
     pkgs.kubie
     pkgs.kubectx
     pkgs.kubernetes-helm
-	pkgs.jq
-	pkgs.yq-go
-	pkgs.redis
+    pkgs.jq
+	  pkgs.yq-go
+	  pkgs.redis
   ];
 
   enterShell = ''
     echo "~~~ lily in $LILY_ENVIRONMENT ~~~"
-    alias k='microk8s kubectl
   '';
   
   enterTest = ''

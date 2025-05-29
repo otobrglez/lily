@@ -13,6 +13,7 @@ object Examples extends LiveHtml:
       |html, body, input, label, td, th, p, ul, li { font-family: sans-serif; font-size: 12pt; }
       |body { padding: 10px; margin: 0; }
       |table td, table th { padding: 5px; }
+      |ul, ul li { padding: 2px; }
       |table thead th { text-align: center; }
       |table input[type=number], table td, table th { text-align: right; }
       |table input[type=number] { width: 80px; }

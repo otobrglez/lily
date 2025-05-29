@@ -2,9 +2,9 @@ package dev.lily.examples
 
 import dev.lily.ClientEvent.{on, onData}
 import dev.lily.HTMLOps.{*, given}
+import dev.lily.LiveView
 import dev.lily.lhtml.Html
 import dev.lily.lhtml.syntax.{*, given}
-import dev.lily.{ClientEvent, LiveView}
 import zio.ZIO.logWarning
 import zio.http.Path
 import zio.stream.ZStream
@@ -36,7 +36,7 @@ object TableExample:
 final case class TableExample private (private val tableRef: Ref[MyTable]) extends LiveView[Any, MyTable]:
   def state = ZStream.fromZIO(tableRef.get)
 
-  override def onEvent(state: MyTable, event: ClientEvent): Task[MyTable] = event match
+  def on(state: MyTable): Handler =
     case onData("set", Some(value), List(row, column)) =>
       tableRef.updateAndGet(_.copy(data = state.data + ((row.toInt, column.toInt) -> Some(value))))
     case on("addRow", _)                               =>
