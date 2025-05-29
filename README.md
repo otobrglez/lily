@@ -1,6 +1,6 @@
 # The Lily Framework
 
-Lily is a tiny framework for rapid and easy development of live/real-time web applications in Scala.
+Lily is a lightweight framework for the rapid and easy development of live, real-time web applications in Scala.
 
 Lily is built around and integrates flawlessly with [ZIO HTTP][ZIO-HTTP] and [ZIO Streams][ZIO-STREAMS]. 
 
