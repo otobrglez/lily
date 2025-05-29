@@ -2,7 +2,7 @@ package dev.lily.fe
 
 import io.circe.parser.decode
 import io.circe.generic.auto.*
-import dev.lily.{ClientEvent, DomChanged}
+import dev.lily.{ClientEvent, DomChanged, JavaScriptEvent}
 import dev.lily.fe.DOMOps.*
 import dev.lily.fe.JSONOps.*
 import dev.lily.lhtml.Html
@@ -70,14 +70,9 @@ final private[fe] case class Lily private (
     socket.onerror = (event: dom.Event) => console.error(s"Error connecting to Lily w/ ${event}")
 
   private def attachEventHandlers(): Unit =
-    document.addEventListener("click", localEventHandler(_))
-    document.addEventListener("input", localEventHandler(_))
-    document.addEventListener("mouseover", localEventHandler(_))
-    document.addEventListener("mouseout", localEventHandler(_))
-    document.addEventListener("change", localEventHandler(_))
-    document.addEventListener("keydown", localEventHandler(_))
-    document.addEventListener("keypress", localEventHandler(_))
-    document.addEventListener("keyup", localEventHandler(_))
+    JavaScriptEvent.values.foreach { event =>
+      document.addEventListener(event.name, localEventHandler(_))
+    }
 
   private def getData(e: HTMLElement): List[String] = (for
     rawData <- Option(e.data("li-attached-data"))

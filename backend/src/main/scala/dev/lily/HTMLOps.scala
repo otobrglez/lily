@@ -8,10 +8,18 @@ object HTMLOps:
   extension (h: Html)
     private def asZIOHtml: ZIOHtml = ZIOHtml.raw(Html.renderWithIndent(h))
 
-    def on(clientEvent: String, serverEvent: String): Html =
-      h.data("li-on-" + clientEvent, serverEvent)
+    def on(clientEvent: String, serverEvent: String): Html  = h.data("li-on-" + clientEvent, serverEvent)
+    def on(tpl: (String, String)): Html                     = on(tpl._1, tpl._2)
+    def on(tpl: (String, String), data: List[String]): Html = on(tpl._1, tpl._2, data)
+    def on(tpl: (String, String), data: String): Html       = on(tpl._1, tpl._2, List(data))
 
-    def on(tpl: (String, String)): Html = on(tpl._1, tpl._2)
+    def on(clientEvent: String, serverEvent: String, attachedData: List[String] = List.empty): Html =
+      if attachedData.isEmpty then on(clientEvent, serverEvent)
+      else
+        on(clientEvent, serverEvent).data(
+          "li-attached-data",
+          stringListToJsonArray(attachedData, useSingleQuotes = true)
+        )
 
     private def escapeJsonString(s: String): String =
       s.replace("\\", "\\\\")  // Escape backslashes first (must be first)
@@ -28,14 +36,6 @@ object HTMLOps:
       val quoteChar     = if useSingleQuotes then "'" else "\""
       val escapedValues = strings.map(s => s"$quoteChar${escapeJsonString(s)}$quoteChar")
       "[" + escapedValues.mkString(",") + "]"
-
-    def on(clientEvent: String, serverEvent: String, attachedData: List[String] = List.empty): Html =
-      if attachedData.isEmpty then on(clientEvent, serverEvent)
-      else
-        on(clientEvent, serverEvent).data(
-          "li-attached-data",
-          stringListToJsonArray(attachedData, useSingleQuotes = true)
-        )
 
     def addIDs(start: Int = 999): Html           = HtmlIdEnhancer.addNumericIDs(h, start)
     def addRandomIDs(stringSize: Int = 10): Html = HtmlIdEnhancer.addRandomIDs(h, stringSize = 10)

@@ -21,6 +21,16 @@ object DomChanged:
   def fromBinary(blob: Array[Byte]): Either[String, DomChanged]      = deserializeFromCbor(blob).asRight
 
 // Events from Client --> Server
+enum JavaScriptEvent(val name: String):
+  case Click     extends JavaScriptEvent("click")
+  case Input     extends JavaScriptEvent("input")
+  case MouseOver extends JavaScriptEvent("mouseover")
+  case MouseOut  extends JavaScriptEvent("mouseout")
+  case Change    extends JavaScriptEvent("change")
+  case KeyDown   extends JavaScriptEvent("keydown")
+  case KeyUp     extends JavaScriptEvent("keyup")
+  case KeyPress  extends JavaScriptEvent("keypress")
+
 type ServerEventName = String
 type ClientEventName = String
 type LIID            = String

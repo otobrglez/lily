@@ -5,7 +5,7 @@ import dev.lily.HTMLOps.{*, given}
 import dev.lily.LiveView
 import dev.lily.lhtml.Html
 import dev.lily.lhtml.syntax.{*, given}
-import zio.ZIO.logWarning
+import zio.ZIO.{logInfo, logWarning}
 import zio.http.Path
 import zio.stream.ZStream
 import zio.{Ref, Task, ZIO}
@@ -13,7 +13,8 @@ import zio.{Ref, Task, ZIO}
 final case class MyTable(
   rows: Int = 10,
   columns: Int = 7,
-  data: Map[(Int, Int), Option[String]] = Map.empty
+  data: Map[(Int, Int), Option[String]] = Map.empty,
+  sortedBy: Map[Int, String] = Map.empty
 )
 
 object TableExample:
@@ -59,7 +60,6 @@ final case class TableExample private (private val tableRef: Ref[MyTable]) exten
       ))
     case onData("removeRowAt", _, List(row))           =>
       tableRef.updateAndGet(_.copy(data = state.data.filterNot(_._1._1 == row.toInt)))
-    case e                                             => logWarning(s"Unhandled event: $e").as(state)
 
   private val cell: (Int, Int) => MyTable => Html = (r, c) =>
     table =>
@@ -75,13 +75,18 @@ final case class TableExample private (private val tableRef: Ref[MyTable]) exten
     val sum = table.data.filter((pos, _) => pos._2 == c).values.flatMap(_.flatMap(_.toIntOption)).sum
     if sum == 0 then span(" ") else span(s"Sum = $sum")
 
+  private def avgForRow(table: MyTable, r: Int): Html =
+    val values = table.data.filter((pos, _) => pos._1 == r).values.flatMap(_.flatMap(_.toIntOption))
+    val avg    = if values.isEmpty then 0.0 else values.sum.toDouble / values.size
+    if avg == 0.0 then span(" ") else span(f"$avg%.2f")
+
   override def render(state: MyTable, path: Path): Task[Html] = ZIO.succeed:
     Examples.layout(Some("Table example"), Some(path))(
       h1("Lily - Table example"),
       div(
         button("Add row").on("click", "addRow"),
-        button("Remove row").on("click", "removeRow"),
         button("Add column").on("click", "addColumn"),
+        button("Remove row").on("click", "removeRow"),
         button("Remove column").on("click", "removeColumn"),
         button("Populate").on("click", "populate"),
         button("Clear").on("click", "clear")
@@ -89,18 +94,24 @@ final case class TableExample private (private val tableRef: Ref[MyTable]) exten
       div(
         table(
           thead(
-            tr(th("").attr("colspan" -> "2") +: (for (c <- 1 to state.columns) yield th((c + 64).toChar.toString)))
+            tr(
+              th("").attr("colspan" -> "2") +:
+                (for (c <- 1 to state.columns) yield th((c + 64).toChar.toString)) :+
+                th("Avg.")
+            )
           ),
           tbody(
             for (r <- 1 to state.rows)
               yield tr(
                 Seq(td(r.toString), td(button("🗑️").on("click", "removeRowAt", List(r.toString)))) ++
-                  (for (c <- 1 to state.columns) yield td(cell(r, c)(state)))
+                  (for (c <- 1 to state.columns) yield td(cell(r, c)(state))) :+
+                  td(avgForRow(state, r))
               )
           ),
           tfoot(
             tr(
-              td("").attr("colspan" -> "2") +: (for (c <- 1 to state.columns) yield td(sumForColumn(state, c)))
+              td("").attr("colspan" -> "2") +: (for (c <- 1 to state.columns)
+                yield td(sumForColumn(state, c))) :+ td("")
             )
           )
         )

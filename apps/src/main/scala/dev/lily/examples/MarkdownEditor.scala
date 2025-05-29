@@ -113,8 +113,9 @@ final case class MarkdownEditor(
       |
       |""".stripMargin
 
-  private val random                                                         = scala.util.Random
-  override def render(state: (Markdown, OutputHtml), path: Path): Task[Html] = ZIO.succeed:
+  private val random = scala.util.Random
+
+  def render(state: (Markdown, OutputHtml), path: Path): Task[Html] = ZIO.succeed:
     Examples.layout(Some("Markdown Editor"), Some(path), Some(css))(
       h1("Markdown Editor"),
       div(
