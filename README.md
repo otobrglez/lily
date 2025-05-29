@@ -1,9 +1,45 @@
-# The Lily Project
+# The Lily Framework
 
-Let there be lilies.
+Lily is a tiny framework for rapid and easy development of live/real-time web applications in Scala.
 
-Lily is a [LiveView] implementation on top of [ZIO-HTTP] and will make your experience of writing live/real-time
-applications a breeze without or minimal usage of JavaScript.
+Lily is built around and integrates flawlessly with [ZIO HTTP][ZIO-HTTP] and [ZIO Streams][ZIO-STREAMS]. 
+
+The framework offloads the rendering heavy lifting to the server side ([DOM]) and communicates with the frontend via DOM diffing and binary WebSockets (CBOR).
+
+It's a work in progress, so expect things to change. Please see [example apps][examples] for some inspiration.
+
+
+## Example app
+
+```scala 3
+object CounterExample extends LiveView[Any, Int]:
+  def state = ZStream.fromZIO(ZIO.succeed(0))
+
+  override def onEvent(state: Int, event: ClientEvent): Task[Int] = event match
+    case on("increment" -> _) => ZIO.succeed(state + 1)
+    case on("decrement" -> _) => ZIO.succeed(state - 1)
+    case _                    => ZIO.succeed(state)
+
+  def render(n: Int, path: Path): Task[Html] = ZIO.succeed:
+    Examples.layout(Some("Simple Counter Example"), Some(path))(
+      h1("Lily - Counter example"),
+      div(p(s"Counter is now: $n")),
+      div(p(s"Plus two is ${n + 2}")),
+      div(p(s"Some math: ${n * 1.2 * Math.PI}")),
+      div(
+        button("Increment").on("click" -> "increment"),
+        button("Decrement").on("click" -> "decrement")
+      )
+    )
+
+// Add to your ZIO HTTP routes via:
+
+private val routes =
+  Routes(
+    Method.GET / Root -> handler(Response.text("Hello, World!"))
+  )
+    ++ LiveView.route(Path.empty / "counter-v2", examples.CounterExample)
+```
 
 \- Oto
 
@@ -21,3 +57,6 @@ applications a breeze without or minimal usage of JavaScript.
 
 [LiveView]: https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html
 [ZIO-HTTP]: https://zio.dev/zio-http/
+[ZIO-STREAMS]: https://zio.dev/reference/stream/
+[examples]: https://github.com/otobrglez/lily/tree/master/backend/src/main/scala/dev/lily/examples
+[DOM]: https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model
