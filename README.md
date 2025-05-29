@@ -15,10 +15,10 @@ It's a work in progress, so expect things to change. Please see [example apps][e
 object CounterExample extends LiveView[Any, Int]:
   def state = ZStream.fromZIO(ZIO.succeed(0))
 
-  override def onEvent(state: Int, event: ClientEvent): Task[Int] = event match
-    case on("increment" -> _) => ZIO.succeed(state + 1)
-    case on("decrement" -> _) => ZIO.succeed(state - 1)
-    case _                    => ZIO.succeed(state)
+  def on(s: Int) =
+    case on("increment" -> _) => ZIO.succeed(s + 1)
+    case on("decrement" -> _) => ZIO.succeed(s - 1)
+    case _                    => ZIO.succeed(s)
 
   def render(n: Int, path: Path): Task[Html] = ZIO.succeed:
     Examples.layout(Some("Simple Counter Example"), Some(path))(
@@ -31,6 +31,7 @@ object CounterExample extends LiveView[Any, Int]:
         button("Decrement").on("click" -> "decrement")
       )
     )
+
 
 // Add to your ZIO HTTP routes via:
 
