@@ -6,7 +6,7 @@ Lily is built around and integrates flawlessly with [ZIO HTTP][ZIO-HTTP] and [ZI
 
 The framework offloads the rendering heavy lifting to the server side ([DOM]) and communicates with the frontend via DOM diffing and binary WebSockets (CBOR).
 
-It's a work in progress, so please expect changes. Please take a look at [example apps][apps/src/main/scala/dev/lily] for some inspiration.
+It's a work in progress, so please expect changes. Please take a look at [example apps](apps/src/main/scala/dev/lily) for some inspiration.
 
 
 ## Example app
