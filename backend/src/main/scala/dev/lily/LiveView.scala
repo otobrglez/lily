@@ -35,10 +35,7 @@ trait LiveHtml:
 
 trait LiveView[Env, S] extends LiveHtml:
   protected val emptyState: ZStream[Env, Throwable, S] = ZStream.empty
-  protected def state: ZStream[Env, Throwable, S]
-
-  // protected def onEvent(state: S, event: ClientEvent): ZIO[Env, Throwable, S] = ZIO.succeed(state)
-  protected def render(state: S, path: Path): ZIO[Env, Throwable, Html]
+  protected def initialState: ZStream[Env, Throwable, S]
 
   private def executeOn(
     state: S,
@@ -53,7 +50,7 @@ trait LiveView[Env, S] extends LiveHtml:
   def on(s: S): Handler
 
   final def mount(path: Path): ZIO[Env, Throwable, Html] = for
-    maybeState <- state.runHead
+    maybeState <- initialState.runHead
     state      <- ZIO.fromOption(maybeState).orElseFail(new RuntimeException("No state found"))
     html       <- render(state, path: Path)
   yield html
@@ -70,6 +67,8 @@ trait LiveView[Env, S] extends LiveHtml:
       .flatMap(action)
       .catchNonFatalOrDie(thHandler)
 
+  protected def render(state: S, path: Path): ZIO[Env, Throwable, Html]
+
   final def run(socket: WebSocketChannel, path: Path): ZIO[Env, Throwable, Unit] = ZIO.scoped:
     for
       _ <- logInfo(s"LiveView started on ${path}")
@@ -79,7 +78,7 @@ trait LiveView[Env, S] extends LiveHtml:
       promise      <- zio.Promise.make[Nothing, Unit]
 
       stateFib <-
-        state.tap { newState =>
+        initialState.tap { newState =>
           for
             oldState <- currentState.get
             oldHtml  <- domRef.get
@@ -123,7 +122,7 @@ trait LiveView[Env, S] extends LiveHtml:
                               case _                          =>
                                 for
                                   _          <- logWarning("Got a message, but no state found")
-                                  maybeState <- state.runHead
+                                  maybeState <- initialState.runHead
                                   _          <-
                                     maybeState.fold(logWarning("No state found")) { newState =>
                                       for

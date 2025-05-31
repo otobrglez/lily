@@ -19,46 +19,36 @@ import scala.util.Random.javaRandomToRandom
 type Markdown = String
 
 object Markdown:
-  // This is needed as there are problems with whitespace.
-  private def minifyHtml(html: String): String =
-    html
-      .replaceAll("\\s{2,}", " ") // collapse multiple spaces
-      .replaceAll(">\\s+<", "><") // remove spaces between tags
-      .trim
-
-  def render(raw: String): ZIO[Any, Throwable, Markdown] = for
+  def render(raw: String): Task[Markdown] = for
     parser   <- ZIO.attempt(Parser.builder().build())
     node     <- ZIO.attempt(parser.parse(raw))
     renderer <- ZIO.attempt(HtmlRenderer.builder().build())
-    clean     = renderer.render(node)
-  // clean     = minifyHtml(renderer.render(node))
-  yield clean
+  yield renderer.render(node)
 
 type OutputHtml = Html
 object MarkdownEditor:
-  def make =
-    for
-      mdRef     <-
-        Ref.make(
-          """# Hello, world!
-            |
-            |This is a markdown editor.
-            |It renders [markdown](https://en.wikipedia.org/wiki/Markdown) to HTML and allows you to edit it.
-            |
-            |Rendering is done on the server as you type.
-            |
-            |Try it out!
-            |
-            |\- Oto""".stripMargin
-        )
-      outputRef <- mdRef.get.flatMap(Markdown.render).map(HtmlFromJsoup.fromString).flatMap(Ref.make)
-    yield new MarkdownEditor(mdRef, outputRef)
+  def make = for
+    mdRef     <-
+      Ref.make(
+        """# Hello, world!
+          |
+          |This is a markdown editor.
+          |It renders [markdown](https://en.wikipedia.org/wiki/Markdown) to HTML and allows you to edit it.
+          |
+          |Rendering is done on the server as you type.
+          |
+          |Try it out!
+          |
+          |\- Oto""".stripMargin
+      )
+    outputRef <- mdRef.get.flatMap(Markdown.render).map(HtmlFromJsoup.fromString).flatMap(Ref.make)
+  yield new MarkdownEditor(mdRef, outputRef)
 
 final case class MarkdownEditor(
   private val md: Ref[Markdown],
   private val output: Ref[OutputHtml]
 ) extends LiveView[Any, (Markdown, OutputHtml)]:
-  def state = ZStream.fromZIO(md.get <*> output.get)
+  def initialState = ZStream.fromZIO(md.get <*> output.get)
 
   def on(s: (Markdown, OutputHtml)): Handler =
     case on("set", None)        => ZIO.succeed("" -> "")
@@ -66,7 +56,6 @@ final case class MarkdownEditor(
       val cleanValue = value.strip().trim
       for
         _        <- md.set(cleanValue)
-        _        <- zio.Console.printLine(s"VALUE: ${cleanValue}")
         markdown <- Markdown.render(cleanValue)
         html     <- ZIO
                       .succeed(markdown)
@@ -87,7 +76,6 @@ final case class MarkdownEditor(
       |.editor-inner {
       |  display: flex;
       |  flex-direction: row;
-      |  // height: 100%;
       |}
       |.editor-left,
       |.editor-right {
@@ -116,19 +104,20 @@ final case class MarkdownEditor(
   private val random = scala.util.Random
 
   def render(state: (Markdown, OutputHtml), path: Path): Task[Html] = ZIO.succeed:
+    val (markdown, html) = state
     Examples.layout(Some("Markdown Editor"), Some(path), Some(css))(
-      h1("Markdown Editor"),
+      h1("Lily - Markdown Editor"),
       div(
         div(
           div(
-            textarea(state._1)
+            textarea(markdown)
               .attr("autofocus" -> "true")
               .attr("placeholder" -> "Type your markdown here...")
               .klass("editor-input")
               .on("input" -> "set")
           ).klass("editor-left"),
           div(
-            div(state._2).klass("preview-content")
+            div(html).klass("preview-content")
           ).klass("editor-right").forceReplace
         ).klass("editor-inner")
       ).klass("editor")

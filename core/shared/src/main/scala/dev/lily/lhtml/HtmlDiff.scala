@@ -40,7 +40,7 @@ object HtmlDiff:
 
     // Mismatched node types (Text vs Element, or other)
     case _ => Replace(current)
-  */
+   */
 
   def diff(old: Html, current: Html): HtmlDiff = (old.unfix, current.unfix) match
     case (Text(t1), Text(t2)) =>
@@ -54,18 +54,17 @@ object HtmlDiff:
       if key1 != key2 then Replace(current)
       else if tag1 != tag2 then Replace(current)
       else
-        val attrDiffs = diffAttrs(attrs1, attrs2)
+        val attrDiffs  = diffAttrs(attrs1, attrs2)
         val childDiffs = diffChildren(children1, children2)
 
         attrDiffs -> childDiffs match
           case (Nil, Nil) => NoChange
-          case (a, Nil) => ChangeAttrs(a, None)
-          case (Nil, c) => ChangeChildren(c)
-          case (a, c) => ChangeAttrs(a, Some(ChangeChildren(c)))
+          case (a, Nil)   => ChangeAttrs(a, None)
+          case (Nil, c)   => ChangeChildren(c)
+          case (a, c)     => ChangeAttrs(a, Some(ChangeChildren(c)))
 
     // Mismatched node types (Text vs Element, or other)
     case _ => Replace(current)
-
 
   private def diffAttrs(a: Map[String, String], b: Map[String, String]): List[AttrChanged] =
     val keys = a.keySet union b.keySet

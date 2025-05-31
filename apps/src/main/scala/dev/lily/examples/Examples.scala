@@ -10,10 +10,9 @@ import zio.http.Path
 object Examples extends LiveHtml:
   private val mainCSS =
     """
-      |html, body, input, label, td, th, p, ul, li { font-family: sans-serif; font-size: 12pt; }
+      |html, body, input, label, td, th, p, ul, li { font-family: sans-serif; font-size: 12pt; line-height: 1.5; }
       |body { padding: 10px; margin: 0; }
       |table td, table th { padding: 5px; }
-      |ul, ul li { padding: 2px; }
       |table thead th { text-align: center; }
       |table input[type=number], table td, table th { text-align: right; }
       |table input[type=number] { width: 80px; }
@@ -29,16 +28,14 @@ object Examples extends LiveHtml:
     html(
       head(
         title(pageTitle.fold("Lily")(t => s"$t - Lily")),
-        meta().attr("charset" -> "utf-8"),
+        meta().attr("charset"  -> "utf-8"),
         meta().attr("viewport" -> "width=device-width, initial-scale=1"),
         style(moreCss.fold(mainCSS)(css => mainCSS + "\n" + css))
       ),
       bodyOn(path)(
         div(
           menu(path),
-          div(
-            content
-          ).klass("content-inner")
+          div(content).klass("content-inner")
         ).klass("content")
       )
     )

@@ -17,18 +17,20 @@ final case class StatusBar(
 final case class StatusBarUI private (
   private var statusBar: StatusBar = StatusBar(false, false)
 ):
-  private val spanPadding = "style" -> "padding: 5px;"
+  private val spanPadding    = "style" -> "padding: 5px;"
   private def render(): Html = div(
     span("🌸 Lily").attr(spanPadding),
     span(s"Loaded: ${statusBar.loaded}").attr(spanPadding),
     span(s"Connected: ${statusBar.connected}").attr(spanPadding),
     span(s"Events sent: ${statusBar.eventSent} ⬆").attr(spanPadding),
     span(s"Events received: ${statusBar.eventReceived} ⬇").attr(spanPadding)
-  ).attr("style" ->
-    """
-      |position: fixed; bottom: 10px; right: 10px; display: inline-block; z-index: 999; font-size: 9pt;
-      |padding: 5px; background-color: #000000; color: #ffffff; border-radius: 5px; font-family:monospace;
-      |filter: drop-shadow(2px 2px 1px #999);""".stripMargin)
+  ).attr(
+    "style" ->
+      """
+        |position: fixed; bottom: 10px; right: 10px; display: inline-block; z-index: 999; font-size: 9pt;
+        |padding: 5px; background-color: #000000; color: #ffffff; border-radius: 5px; font-family:monospace;
+        |filter: drop-shadow(2px 2px 1px #999);""".stripMargin
+  )
 
   private def upsertDOM(id: String = "lily-statusbar"): Unit =
     val statusBarElement = document.querySelector(s"div#$id")

@@ -37,7 +37,7 @@ object HtmlSpec extends ZIOSpecDefault:
       )
     },
     test("IDs") {
-      val myHtml = html(
+      val myHtml       = html(
         head(title("Hello world")),
         body(
           div(div(h1("Hello world from Lily!"))),
@@ -50,18 +50,7 @@ object HtmlSpec extends ZIOSpecDefault:
           )
         )
       )
-      // println(myHtml)
-      // println("---")
-      // println(HtmlIdEnhancer.addIds(myHtml))
-
-      val renderedHtml = (
-        Html.renderWithIndent(
-          Html.attachLIIDs(myHtml, 2332)
-        )
-      )
-
-      // println(Html.renderWithIndent(HtmlIdEnhancer.addIds(myHtml)))
-
+      val renderedHtml = Html.renderWithIndent(Html.attachLIIDs(myHtml, 2332))
       assertTrue(renderedHtml.contains("data-idli"))
     }
   )

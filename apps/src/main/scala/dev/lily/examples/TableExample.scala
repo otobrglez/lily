@@ -5,7 +5,6 @@ import dev.lily.HTMLOps.{*, given}
 import dev.lily.LiveView
 import dev.lily.lhtml.Html
 import dev.lily.lhtml.syntax.{*, given}
-import zio.ZIO.{logInfo, logWarning}
 import zio.http.Path
 import zio.stream.ZStream
 import zio.{Ref, Task, ZIO}
@@ -35,7 +34,7 @@ object TableExample:
     yield new TableExample(tableRef)
 
 final case class TableExample private (private val tableRef: Ref[MyTable]) extends LiveView[Any, MyTable]:
-  def state = ZStream.fromZIO(tableRef.get)
+  def initialState = ZStream.fromZIO(tableRef.get)
 
   def on(state: MyTable): Handler =
     case onData("set", Some(value), List(row, column)) =>

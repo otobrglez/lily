@@ -6,7 +6,6 @@ import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.Object
 import scala.scalajs.js.Dynamic.global
 
-
 object DOMOps:
 
   def toJsonSafe(obj: js.Object) =
@@ -40,4 +39,3 @@ object DOMOps:
       attrs           <- Option(element.attributes).flatMap(a => Option(a.toVector))
       (dataKey, attr) <- attrs.find((k, _) => k.startsWith(prefix))
     yield (dataKey, (attr.name, attr.value))
-

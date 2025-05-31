@@ -21,9 +21,8 @@ object Main extends ZIOAppDefault:
         Response.html(
           Examples.layout(
             pageTitle = Some("Welcome!"),
-            moreCss = Some(
-              """
-                |span.big-title { font-size: 50pt; } """.stripMargin)
+            moreCss = Some("""
+                             |span.big-title { font-size: 50pt; } """.stripMargin)
           )(
             h1(span("This is Lily. 🌸").klass("big-title"), " Hello! "),
             p("Lily is a tiny framework for rapid and easy development of live/real-time applications is Scala."),

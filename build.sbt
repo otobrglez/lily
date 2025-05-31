@@ -17,7 +17,23 @@ ThisBuild / scalaVersion      := scala3Version
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalaVersion      := scala3Version
-
+ThisBuild / scalacOptions ++= Seq(
+  "-deprecation",
+  "-encoding",
+  "UTF-8",
+  "-feature",
+  "-unchecked",
+  "-explain",
+  "-language:implicitConversions"
+// "-Xfatal-warnings",
+// "-Xlint",
+// "-Ykind-projector:underscores",
+// "-Ymacro-annotations",
+// "-Yrangepos",
+// "-Ywarn-dead-code",
+// "-Wunused:all",
+// "-language:implicitConversions"
+)
 def copyAll(location: File, outDir: File): List[File] = IO.listFiles(location).toList.map { file =>
   val (name, ext) = file.baseAndExt
   val out         = outDir / (name + "." + ext)
