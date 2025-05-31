@@ -1,12 +1,12 @@
 # The Lily Framework
 
-Lily is a tiny framework for rapid and easy development of live/real-time web applications in Scala.
+Lily is a lightweight framework for the rapid and easy development of live, real-time web applications in Scala.
 
 Lily is built around and integrates flawlessly with [ZIO HTTP][ZIO-HTTP] and [ZIO Streams][ZIO-STREAMS]. 
 
 The framework offloads the rendering heavy lifting to the server side ([DOM]) and communicates with the frontend via DOM diffing and binary WebSockets (CBOR).
 
-It's a work in progress, so expect things to change. Please see [example apps][examples] for some inspiration.
+It's a work in progress, so please expect changes. Please take a look at [example apps](apps/src/main/scala/dev/lily) for some inspiration.
 
 
 ## Example app
@@ -15,10 +15,10 @@ It's a work in progress, so expect things to change. Please see [example apps][e
 object CounterExample extends LiveView[Any, Int]:
   def state = ZStream.fromZIO(ZIO.succeed(0))
 
-  override def onEvent(state: Int, event: ClientEvent): Task[Int] = event match
-    case on("increment" -> _) => ZIO.succeed(state + 1)
-    case on("decrement" -> _) => ZIO.succeed(state - 1)
-    case _                    => ZIO.succeed(state)
+  def on(s: Int) =
+    case on("increment" -> _) => ZIO.succeed(s + 1)
+    case on("decrement" -> _) => ZIO.succeed(s - 1)
+    case _                    => ZIO.succeed(s)
 
   def render(n: Int, path: Path): Task[Html] = ZIO.succeed:
     Examples.layout(Some("Simple Counter Example"), Some(path))(
@@ -31,6 +31,7 @@ object CounterExample extends LiveView[Any, Int]:
         button("Decrement").on("click" -> "decrement")
       )
     )
+
 
 // Add to your ZIO HTTP routes via:
 
@@ -49,7 +50,7 @@ private val routes =
 - Lily can be interactively developed with the help of `sbt-revolver` with:
 
  ```bash
- sbt ~backend/reStart
+ sbt ~apps/reStart
  sbt ~core/test
  ```
 
