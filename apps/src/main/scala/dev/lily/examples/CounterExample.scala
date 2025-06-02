@@ -10,12 +10,11 @@ import zio.stream.ZStream
 import zio.{Task, ZIO}
 
 object CounterExample extends LiveView[Any, Int]:
-  def initialState = ZStream.fromZIO(ZIO.succeed(0))
+  def initialState = ZStream.succeed(0)
 
   def on(s: Int) =
     case on("increment" -> _) => ZIO.succeed(s + 1)
     case on("decrement" -> _) => ZIO.succeed(s - 1)
-    case _                    => ZIO.succeed(s)
 
   def render(n: Int, path: Path): Task[Html] = ZIO.succeed:
     Examples.layout(Some("Counter example"), Some(path))(
