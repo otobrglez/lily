@@ -10,10 +10,13 @@ import zio.{durationInt, Schedule, ZIO}
 import java.time.{LocalDateTime, ZoneId}
 
 object TimeExample extends LiveView[Any, LocalDateTime]:
+  private val updateInterval = 100.millis
+  private val timeZone       = ZoneId.of("CET")
+
   def initialState =
     ZStream
-      .repeatZIO(ZIO.succeed(LocalDateTime.now(ZoneId.of("CET"))))
-      .schedule(Schedule.spaced(10.millis))
+      .repeatZIO(ZIO.succeed(LocalDateTime.now(timeZone)))
+      .schedule(Schedule.spaced(updateInterval))
       .changes
 
   def on(s: LocalDateTime): TimeExample.Handler = emptyHandler
@@ -28,25 +31,18 @@ object TimeExample extends LiveView[Any, LocalDateTime]:
     )
 
 object MemoryStats:
+  private val mbDivisor = 1024.0 * 1024.0
+
   def stats: Map[String, String] =
     val runtime     = Runtime.getRuntime
-    // Total memory currently in use by JVM (bytes)
     val totalMemory = runtime.totalMemory
-    // Free memory within the total memory (bytes)
     val freeMemory  = runtime.freeMemory
-    // Maximum memory the JVM will attempt to use (bytes)
     val maxMemory   = runtime.maxMemory
-    // Memory currently used by the application
     val usedMemory  = totalMemory - freeMemory
 
-    val usedMB  = usedMemory / (1024.0 * 1024.0)
-    val freeMB  = freeMemory / (1024.0 * 1024.0)
-    val totalMB = totalMemory / (1024.0 * 1024.0)
-    val maxMB   = maxMemory / (1024.0 * 1024.0)
-
     Map(
-      "Used Memory"  -> f"$usedMB%.2f MB",
-      "Free Memory"  -> f"$freeMB%.2f MB",
-      "Total Memory" -> f"$totalMB%.2f MB",
-      "Max Memory"   -> f"$maxMB%.2f MB"
+      "Used Memory"  -> f"${usedMemory / mbDivisor}%.2f MB",
+      "Free Memory"  -> f"${freeMemory / mbDivisor}%.2f MB",
+      "Total Memory" -> f"${totalMemory / mbDivisor}%.2f MB",
+      "Max Memory"   -> f"${maxMemory / mbDivisor}%.2f MB"
     )
